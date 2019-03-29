@@ -1,0 +1,12 @@
+package "freespec-stdlib-fileSystem" (
+
+    description = "Freespec.Stdlib/FileSystem Plugin"
+    version     = "8.9"
+
+    requires    = "freespec-exec"
+    directory   = "src"
+
+    archive(byte)    = "stdlib_fileSystem_plugin.cmo"
+    archive(native)  = "stdlib_fileSystem_plugin.cmx"
+
+)

@@ -1,0 +1,10 @@
+CAMLPKGS := -package freespec-exec
+
+install-extra::
+	ocamlfind install freespec-stdlib-fileSystem META src/stdlib_fileSystem_plugin.*
+
+uninstall::
+	ocamlfind remove freespec-stdlib-fileSystem
+
+merlin-hook::
+	echo 'PKG freespec-exec' >> .merlin
