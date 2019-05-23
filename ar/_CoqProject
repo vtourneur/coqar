@@ -2,6 +2,6 @@
 
 theories/Conv.v
 theories/Padding.v
-theories/Ar.v
+theories/ArMain.v
 theories/Header.v
 theories/Dec.v

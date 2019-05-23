@@ -36,3 +36,8 @@ Definition gen_main {ix} `{Use FileSystem.i ix} (files : list string) (output : 
 	write_header fd;;
 	gen_main_aux fd files;;
 	FileSystem.close fd.
+
+Module Ar.
+	Definition create {ix} `{Use FileSystem.i ix} (files : list string) (output : string)
+		: Program ix unit := gen_main files output.
+End Ar.

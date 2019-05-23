@@ -26,13 +26,16 @@ open Unix
 open Exec_plugin.Query
 open Exec_plugin.Utils
 
+let string_of_coqstr coqstr =
+	Bytes.to_string (bytes_of_coqstr coqstr)
+
 let path = ["FreeSpec"; "Stdlib"; "FileSystem"; "FileSystem"]
 
 type mode_constructor = ReadOnly | WriteOnly | ReadWrite
 type seekRef_constructor = Beginning | Current | End
 type fileKind_constructor = Reg | Dir | Chr | Blk | Lnk | Fifo | Sock
 type stats_constructor = MkStats
-type options_constructor = N | NT | Y | YT | YY
+type creationOptions_constructor = N | NT | Y | YT | YY
 
 module Ind_fs = struct
   module Mode =
@@ -67,8 +70,8 @@ module Ind_fs = struct
       end)
   module Options =
     Inductive.Make(struct
-        type constructor = options_constructor
-        let type_name = "options"
+        type constructor = creationOptions_constructor
+        let type_name = "creationOptions"
         let modlist = path
         let names = [("N", N); ("NT", NT); ("Y", Y); ("YT", YT); ("YY", YY)]
       end)

@@ -77,8 +77,8 @@ case x; intro d.
 		destruct b4; [ | now rewrite <- H, uint_string ].
 		destruct b5; [ now rewrite <- H, uint_string | ].
 		destruct b6; [ now rewrite <- H, uint_string | ].
-		now destruct d; simpl in H.
-+ simpl; now rewrite uint_string.
+		now destruct d.
++ now simpl; rewrite uint_string.
 Qed.
 
 Theorem Z_string (x : Z) : Z_of_string (Z_to_string x) = x.

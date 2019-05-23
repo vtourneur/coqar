@@ -24,36 +24,36 @@ Require Import FreeSpec.Program.
 Require Import BinInt.
 
 Module FileSystem.
-  Inductive mode: Type :=
-  | ReadOnly : mode
-  | WriteOnly : mode
-  | ReadWrite : mode.
+  Inductive mode : Type :=
+  | ReadOnly
+  | WriteOnly
+  | ReadWrite.
 
-  Inductive options: Type :=
-  | N : options   (* The file must exist. *)
-  | NT : options  (* The file must exist, and is emptied when opened.
-                     The mode must allow writing. *)
-  | Y : options   (* If the file does not exist, it is created. *)
-  | YT : options  (* If the file does not exist, it is created.
-                     If it exists, it is emptied when opened.
-                     The mode must allow writing. *)
-  | YY : options. (* The file must not exist, and it is created when opened. *)
+  Inductive creationOptions : Type :=
+  | N   (* The file must exist. *)
+  | NT  (* The file must exist, and is emptied when opened.
+           The mode must allow writing. *)
+  | Y   (* If the file does not exist, it is created. *)
+  | YT  (* If the file does not exist, it is created.
+           If it exists, it is emptied when opened.
+           The mode must allow writing. *)
+  | YY. (* The file must not exist, and it is created when opened. *)
 
-  Inductive seekRef: Type :=
-  | Beginning : seekRef
-  | Current : seekRef
-  | End : seekRef.
+  Inductive seekRef : Type :=
+  | Beginning
+  | Current
+  | End.
 
-  Inductive fileKind: Type :=
-  | Reg : fileKind
-  | Dir : fileKind
-  | Chr : fileKind
-  | Blk : fileKind
-  | Lnk : fileKind
-  | Fifo : fileKind
-  | Sock : fileKind.
+  Inductive fileKind : Type :=
+  | Reg
+  | Dir
+  | Chr
+  | Blk
+  | Lnk
+  | Fifo
+  | Sock.
 
-  Record stats: Type := MkStats
+  Record stats : Type := MkStats
   {
     dev : Z;
     ino : Z;
@@ -68,7 +68,7 @@ Module FileSystem.
 
   Inductive i: Type -> Type :=
   | Stat: string -> i stats
-  | Open: mode -> options -> string -> i Z
+  | Open: mode -> creationOptions -> string -> i Z
   | OpenDir: string -> i Z
   | FStat: Z -> i stats
   | GetSize: Z -> i Z
@@ -83,7 +83,7 @@ Module FileSystem.
     : Program ix stats :=
     request (Stat str).
 
-  Definition open {ix} `{Use i ix} (m: mode) (o: options) (str: string)
+  Definition open {ix} `{Use i ix} (m: mode) (o: creationOptions) (str: string)
     : Program ix Z :=
     request (Open m o str).
 
