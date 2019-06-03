@@ -35,7 +35,7 @@ type mode_constructor = ReadOnly | WriteOnly | ReadWrite
 type seekRef_constructor = Beginning | Current | End
 type fileKind_constructor = Reg | Dir | Chr | Blk | Lnk | Fifo | Sock
 type stats_constructor = MkStats
-type creationOptions_constructor = N | NT | Y | YT | YY
+type options_constructor = DontCreate | DontCreateTruncate | MayCreate | MayCreateTruncate | MustCreate
 
 module Ind_fs = struct
   module Mode =
@@ -70,10 +70,10 @@ module Ind_fs = struct
       end)
   module Options =
     Inductive.Make(struct
-        type constructor = creationOptions_constructor
-        let type_name = "creationOptions"
+        type constructor = options_constructor
+        let type_name = "options"
         let modlist = path
-        let names = [("N", N); ("NT", NT); ("Y", Y); ("YT", YT); ("YY", YY)]
+        let names = [("DontCreate", DontCreate); ("DontCreateTruncate", DontCreateTruncate); ("MayCreate", MayCreate); ("MayCreateTruncate", MayCreateTruncate); ("MustCreate", MustCreate)]
       end)
 end
 
@@ -88,11 +88,11 @@ let create_open_flags_list m c =
   let coqbool_create_to_open_flag_l c =
     let (c, args) = app_full c in
     match (Ind_fs.Options.constructor_of c, args) with
-    | (Some N, []) -> []
-    | (Some NT, []) -> [O_TRUNC]
-    | (Some Y, []) -> [O_CREAT]
-    | (Some YT, []) -> [O_CREAT; O_TRUNC]
-    | (Some YY, []) -> [O_CREAT; O_EXCL]
+    | (Some DontCreate, []) -> []
+    | (Some DontCreateTruncate, []) -> [O_TRUNC]
+    | (Some MayCreate, []) -> [O_CREAT]
+    | (Some MayCreateTruncate, []) -> [O_CREAT; O_TRUNC]
+    | (Some MustCreate, []) -> [O_CREAT; O_EXCL]
     | _ -> raise (UnsupportedTerm "not a constructor of [bool]") in
   (coqmode_to_open_flag_l m) @ (coqbool_create_to_open_flag_l c)
 
@@ -124,7 +124,7 @@ let stats_to_coqstats s =
                          coqfileKind_of_file_kind s.st_kind; int_to_coqz s.st_perm;
                          int_to_coqz s.st_nlink; int_to_coqz s.st_uid;
                          int_to_coqz s.st_gid; int_to_coqz s.st_rdev;
-                         int_to_coqz s.st_size]))
+                         int_to_coqn s.st_size]))
 
 let install_interface =
   let stat = function
@@ -144,11 +144,11 @@ let install_interface =
     | [fd] -> stats_to_coqstats (fstat (coqz_to_fd fd))
     | _ -> assert false in
   let getSize = function
-    | [fd] -> int_to_coqz (fstat (coqz_to_fd fd)).st_size
+    | [fd] -> int_to_coqn (fstat (coqz_to_fd fd)).st_size
     | _ -> assert false in
   let read = function
-    | [n; fd] -> let buff = Bytes.create (int_of_coqz n) in
-               ignore (read (coqz_to_fd fd) buff 0 (int_of_coqz n));
+    | [n; fd] -> let buff = Bytes.create (int_of_coqn n) in
+               ignore (read (coqz_to_fd fd) buff 0 (int_of_coqn n));
                bytes_to_coqstr buff
     | _ -> assert false in
   let readDir = function

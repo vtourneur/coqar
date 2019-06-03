@@ -22,6 +22,7 @@ Require Import FreeSpec.Exec.
 Require Export Coq.Strings.String.
 Require Import FreeSpec.Program.
 Require Import BinInt.
+Require Import BinNat.
 
 Module FileSystem.
   Inductive mode : Type :=
@@ -29,15 +30,15 @@ Module FileSystem.
   | WriteOnly
   | ReadWrite.
 
-  Inductive creationOptions : Type :=
-  | N   (* The file must exist. *)
-  | NT  (* The file must exist, and is emptied when opened.
-           The mode must allow writing. *)
-  | Y   (* If the file does not exist, it is created. *)
-  | YT  (* If the file does not exist, it is created.
-           If it exists, it is emptied when opened.
-           The mode must allow writing. *)
-  | YY. (* The file must not exist, and it is created when opened. *)
+  Inductive options : Type :=
+  | DontCreate          (* The file must exist. *)
+  | DontCreateTruncate (* The file must exist, and is emptied when opened.
+                            The mode must allow writing. *)
+  | MayCreate           (* If the file does not exist, it is created. *)
+  | MayCreateTruncate  (* If the file does not exist, it is created.
+                            If it exists, it is emptied when opened.
+                            The mode must allow writing. *)
+  | MustCreate.         (* The file must not exist, and it is created when opened. *)
 
   Inductive seekRef : Type :=
   | Beginning
@@ -63,16 +64,16 @@ Module FileSystem.
     uid : Z;
     gid : Z;
     rdev : Z;
-    size : Z;
+    size : N;
   }.
 
   Inductive i: Type -> Type :=
   | Stat: string -> i stats
-  | Open: mode -> creationOptions -> string -> i Z
+  | Open: mode -> options -> string -> i Z
   | OpenDir: string -> i Z
   | FStat: Z -> i stats
-  | GetSize: Z -> i Z
-  | Read: Z -> Z -> i string
+  | GetSize: Z -> i N
+  | Read: N -> Z -> i string
   | ReadDir: Z -> i string
   | Write: string -> Z -> i unit
   | Seek: seekRef -> Z -> Z -> i unit
@@ -83,7 +84,7 @@ Module FileSystem.
     : Program ix stats :=
     request (Stat str).
 
-  Definition open {ix} `{Use i ix} (m: mode) (o: creationOptions) (str: string)
+  Definition open {ix} `{Use i ix} (m: mode) (o: options) (str: string)
     : Program ix Z :=
     request (Open m o str).
 
@@ -96,10 +97,10 @@ Module FileSystem.
     request (FStat fd).
 
   Definition getSize {ix} `{Use i ix} (fd: Z)
-    : Program ix Z :=
+    : Program ix N :=
     request (GetSize fd).
 
-  Definition read {ix} `{Use i ix} (n fd: Z)
+  Definition read {ix} `{Use i ix} (n: N) (fd: Z)
     : Program ix string :=
     request (Read n fd).
 

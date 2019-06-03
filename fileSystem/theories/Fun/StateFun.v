@@ -1,6 +1,7 @@
+Require Import BinInt.
+Require Import BinNat.
 Require Import Lia.
 Require Import FileSystem.
-Require Import BinInt.
 Require Import String.
 Require Import Ascii.
 Require Export Dec.
@@ -35,30 +36,30 @@ Qed.
 
 Definition fdContent := partial Z ascii.
 
-Fixpoint addString (s : string) (p : Z) (c : fdContent) : fdContent :=
+Fixpoint addString (s : string) (p : N) (c : fdContent) : fdContent :=
 	match s with
-	| String n ns => addString ns (p + 1) (setFun c (Some n) p)
+	| String n ns => addString ns (p + 1) (setFun c (Some n) (Z.of_N p))
 	| _ => c
 	end.
 
-Fixpoint getString_aux (n : nat) (p : Z) (c : fdContent) (acc : string) : option string :=
+Fixpoint getString_aux (n : nat) (p : N) (c : fdContent) (acc : string) : option string :=
 	match n with
-	| S m => match c p with
+	| S m => match c (Z.of_N p) with
 		|	Some ch => getString_aux m (p + 1) c (acc ++ String ch "")
 		|	_ => None
 		end
 	| _ => Some acc
 	end.
 
-Definition getString (n : Z) (p : Z) (c : fdContent) : option string :=
-	getString_aux (Z.abs_nat n) p c "".
+Definition getString (n : N) (p : N) (c : fdContent) : option string :=
+	getString_aux (N.to_nat n) p c "".
 
 Record fdState : Type := MkFdState
 {
 	mode : FileSystem.mode;
 	kind : option FileSystem.fileKind;
-	size : option Z;
-	pos : option Z;
+	size : option N;
+	pos : option N;
 	content : fdContent;
 }.
 
@@ -67,9 +68,9 @@ Definition setMode (f : FileSystem.mode -> FileSystem.mode) (s : fdState) :=
 Definition setKind
 	(f : option FileSystem.fileKind -> option FileSystem.fileKind) (s : fdState) :=
 	let (a, b, c, d, e) := s in MkFdState a (f b) c d e.
-Definition setSize (f : option Z -> option Z) (s : fdState) :=
+Definition setSize (f : option N -> option N) (s : fdState) :=
 	let (a, b, c, d, e) := s in MkFdState a b (f c) d e.
-Definition setPos (f : option Z -> option Z) (s : fdState) :=
+Definition setPos (f : option N -> option N) (s : fdState) :=
 	let (a, b, c, d, e) := s in MkFdState a b c (f d) e.
 Definition setContent (f : fdContent -> fdContent) (s : fdState) :=
 	let (a, b, c, d, e) := s in MkFdState a b c d (f e).
