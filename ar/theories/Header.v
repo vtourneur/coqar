@@ -20,11 +20,11 @@ rewrite 3!padding_len.
 now compute.
 Qed.
 
-Fixpoint substring_space (s : string)
+Fixpoint header_first_entry (s : string)
 : string :=
 	match s with
-	|	String " " s => ""
-	|	String c s => String c (substring_space s)
+	|	String " " s | String "/" s => ""
+	|	String c s => String c (header_first_entry s)
 	|	_ => ""
 	end.
 
@@ -41,7 +41,7 @@ Fixpoint last (s : string) (n : nat) :=
 	end.
 
 Definition read_header_filename (h : string)
-	: string := substring_space h.
+	: string := header_first_entry h.
 
 Definition read_header_filesize (h : string)
-	: Z := Z_of_string (substring_space (last h 48)).
+	: Z := Z_of_string (header_first_entry (last h 48)).

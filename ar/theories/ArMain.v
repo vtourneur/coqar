@@ -7,6 +7,8 @@ Require Import BinInt.
 Require Import BinNat.
 Require Import Header.
 
+From Equations Require Import Equations.
+
 Require Import Lia.
 Require Import Coq.Program.Wf.
 
@@ -57,6 +59,9 @@ Definition read_entry {ix} `{Use FileSystem.i ix} (h : string) (fd : Z)
 	FileSystem.close fd_out;;
 	pure size.
 
+Set Transparent Obligations.
+(*
+
 Program Fixpoint extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N) {measure size (N.lt)}
 	: Program ix unit :=
 	h <- FileSystem.read 59 fd;
@@ -73,13 +78,67 @@ Program Fixpoint extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N)
 Next Obligation.
 Proof.
 lia.
-Qed.
+Defined.
 
 Next Obligation.
 Proof.
 apply measure_wf.
 apply N.lt_wf_0.
-Qed.
+Defined.
+
+Goal True.
+Proof.
+pose (X := (extract_aux_rec 4 5)).
+hnf in X.
+Abort.
+
+Eval hnf in (extract_aux_rec 4 5).
+
+Exec (extract_aux_rec 5 4).
+*)
+
+Equations extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : nat)
+	: Program ix unit by wf size :=
+
+extract_aux_rec fd 0 := pure tt;
+
+extract_aux_rec fd size :=
+	h <- FileSystem.read 59 fd;
+	FileSystem.read 1 fd;; (* new line *)
+	match h with
+	| EmptyString => pure tt
+	| _ => f_size <- read_entry h fd;
+		     extract_aux_rec fd (size - 60 - (N.to_nat f_size))
+	end.
+
+Next Obligation.
+lia.
+Defined.
+
+Global Transparent extract_aux_rec.
+
+(*
+Equations extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N)
+	: Program ix unit by wf size :=
+
+extract_aux_rec fd 0 := pure tt;
+
+extract_aux_rec fd size :=
+	h <- FileSystem.read 59 fd;
+	match h with
+	| EmptyString => pure tt
+	| _ => f_size <- read_entry h fd;
+		     extract_aux_rec fd (size - 59 - f_size)
+	end.
+
+Next Obligation.
+exact (N.to_nat H).
+Defined.
+
+Next Obligation.
+unfold extract_aux_rec_obligations_obligation_1.
+Admitted.
+*)
 
 Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 	: Program ix bool :=
@@ -88,7 +147,7 @@ Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 	b <- check_header fd;
 	match b with
 	|	true =>
-		extract_aux_rec fd (size - 8);;
+		extract_aux_rec fd (N.to_nat (size - 8));;
 		FileSystem.close fd;;
 		pure true
 	|	_ =>
