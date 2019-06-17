@@ -9,6 +9,26 @@ Require Import Header.
 
 From Equations Require Import Equations.
 
+(* Needed to use wf recursion on type N *)
+Global Instance lt_wf : WellFounded N.lt.
+Proof.
+intro x.
+induction x using N.peano_ind.
++ constructor.
+	intros y Hy.
+	inversion Hy.
+	destruct y; easy.
++ constructor.
+	intros y Hy. 
+	apply N.lt_succ_r in Hy.
+	apply N.le_lteq in Hy.
+	destruct Hy.
+	- constructor.
+		inversion IHx.
+		now apply H0.
+	- now subst.
+Qed.
+
 Require Import Lia.
 Require Import Coq.Program.Wf.
 
@@ -60,7 +80,8 @@ Definition read_entry {ix} `{Use FileSystem.i ix} (h : string) (fd : Z)
 	pure size.
 
 Set Transparent Obligations.
-(*
+(* With Program Fixpoint, the term contains opaque parts, so it is impossible
+to execute it with FreeSpec.Exec
 
 Program Fixpoint extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N) {measure size (N.lt)}
 	: Program ix unit :=
@@ -86,38 +107,9 @@ apply measure_wf.
 apply N.lt_wf_0.
 Defined.
 
-Goal True.
-Proof.
-pose (X := (extract_aux_rec 4 5)).
-hnf in X.
-Abort.
-
-Eval hnf in (extract_aux_rec 4 5).
-
-Exec (extract_aux_rec 5 4).
+We use Equations to define the term, which avoids this issue
 *)
 
-Equations extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : nat)
-	: Program ix unit by wf size :=
-
-extract_aux_rec fd 0 := pure tt;
-
-extract_aux_rec fd size :=
-	h <- FileSystem.read 59 fd;
-	FileSystem.read 1 fd;; (* new line *)
-	match h with
-	| EmptyString => pure tt
-	| _ => f_size <- read_entry h fd;
-		     extract_aux_rec fd (size - 60 - (N.to_nat f_size))
-	end.
-
-Next Obligation.
-lia.
-Defined.
-
-Global Transparent extract_aux_rec.
-
-(*
 Equations extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N)
 	: Program ix unit by wf size :=
 
@@ -128,17 +120,36 @@ extract_aux_rec fd size :=
 	match h with
 	| EmptyString => pure tt
 	| _ => f_size <- read_entry h fd;
-		     extract_aux_rec fd (size - 59 - f_size)
+		     extract_aux_rec fd (size - f_size - 59)
 	end.
 
 Next Obligation.
-exact (N.to_nat H).
+pose (size := N.pos p).
+change 
+	(match f_size with
+	 | 0 => N.pos p
+	 | N.pos m' =>
+			 match Pos.sub_mask p m' with
+			 | Pos.IsPos p0 => N.pos p0
+			 | _ => 0
+			 end
+	 end)%N
+with
+	(match size with
+	| 0%N => 0%N
+	| N.pos n' =>
+			match f_size with
+			| 0%N => size
+			| N.pos m' =>
+					match Pos.sub_mask n' m' with
+					| Pos.IsPos p => N.pos p
+					| _ => 0%N
+					end
+			end
+	end)%N.
+fold (N.sub size f_size).
+lia.
 Defined.
-
-Next Obligation.
-unfold extract_aux_rec_obligations_obligation_1.
-Admitted.
-*)
 
 Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 	: Program ix bool :=
@@ -147,7 +158,7 @@ Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 	b <- check_header fd;
 	match b with
 	|	true =>
-		extract_aux_rec fd (N.to_nat (size - 8));;
+		extract_aux_rec fd (size - 8);;
 		FileSystem.close fd;;
 		pure true
 	|	_ =>
