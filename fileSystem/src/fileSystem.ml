@@ -27,7 +27,7 @@ open Exec_plugin.Query
 open Exec_plugin.Utils
 
 let string_of_coqstr coqstr =
-	Bytes.to_string (bytes_of_coqstr coqstr)
+  Bytes.to_string (bytes_of_coqstr coqstr)
 
 let path = ["FreeSpec"; "Stdlib"; "FileSystem"; "FileSystem"]
 
@@ -172,7 +172,11 @@ let install_interface =
     | [dh] -> closedir (coqz_to_dh dh);
                coqtt
     | _ -> assert false in
+  let unlink = function
+    | [str] -> unlink (string_of_coqstr str);
+                coqtt
+    | _ -> assert false in
   register_interface path [("Stat", stat); ("Open", open_); ("OpenDir", openDir);
                            ("FStat", fStat); ("GetSize", getSize); ("Read", read);
                            ("ReadDir", readDir); ("Write", write); ("Seek", seek);
-                           ("Close", close); ("CloseDir", closeDir)]
+                           ("Close", close); ("CloseDir", closeDir); ("Unlink", unlink)]

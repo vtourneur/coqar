@@ -78,7 +78,8 @@ Module FileSystem.
   | Write: string -> Z -> i unit
   | Seek: seekRef -> Z -> Z -> i unit
   | Close: Z -> i unit
-  | CloseDir: Z -> i unit.
+  | CloseDir: Z -> i unit
+  | Unlink: string -> i unit.
 
   Definition stat {ix} `{Use i ix} (str: string)
     : Program ix stats :=
@@ -123,6 +124,10 @@ Module FileSystem.
   Definition closeDir {ix} `{Use i ix} (dh: Z)
     : Program ix unit :=
     request (CloseDir dh).
+
+  Definition unlink {ix} `{Use i ix} (str: string)
+    : Program ix unit :=
+    request (Unlink str).
 End FileSystem.
 
 Declare ML Module "stdlib_fileSystem_plugin".
