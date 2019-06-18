@@ -9,6 +9,9 @@ Require Import Header.
 
 From Equations Require Import Equations.
 
+Require Import Lia.
+Require Import Coq.Program.Wf.
+
 (* Needed to use wf recursion on type N *)
 Global Instance lt_wf : WellFounded N.lt.
 Proof.
@@ -16,8 +19,7 @@ intro x.
 induction x using N.peano_ind.
 + constructor.
 	intros y Hy.
-	inversion Hy.
-	destruct y; easy.
+	lia.
 + constructor.
 	intros y Hy. 
 	apply N.lt_succ_r in Hy.
@@ -28,9 +30,6 @@ induction x using N.peano_ind.
 		now apply H0.
 	- now subst.
 Qed.
-
-Require Import Lia.
-Require Import Coq.Program.Wf.
 
 Local Open Scope prelude_scope.
 
@@ -80,6 +79,7 @@ Definition read_entry {ix} `{Use FileSystem.i ix} (h : string) (fd : Z)
 	pure size.
 
 Set Transparent Obligations.
+
 (* With Program Fixpoint, the term contains opaque parts, so it is impossible
 to execute it with FreeSpec.Exec
 
@@ -96,6 +96,7 @@ Program Fixpoint extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N)
 		end
 	end.
 
+
 Next Obligation.
 Proof.
 lia.
@@ -107,8 +108,11 @@ apply measure_wf.
 apply N.lt_wf_0.
 Defined.
 
+
 We use Equations to define the term, which avoids this issue
 *)
+
+Opaque N.sub.
 
 Equations extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N)
 	: Program ix unit by wf size :=
@@ -124,32 +128,10 @@ extract_aux_rec fd size :=
 	end.
 
 Next Obligation.
-pose (size := N.pos p).
-change 
-	(match f_size with
-	 | 0 => N.pos p
-	 | N.pos m' =>
-			 match Pos.sub_mask p m' with
-			 | Pos.IsPos p0 => N.pos p0
-			 | _ => 0
-			 end
-	 end)%N
-with
-	(match size with
-	| 0%N => 0%N
-	| N.pos n' =>
-			match f_size with
-			| 0%N => size
-			| N.pos m' =>
-					match Pos.sub_mask n' m' with
-					| Pos.IsPos p => N.pos p
-					| _ => 0%N
-					end
-			end
-	end)%N.
-fold (N.sub size f_size).
 lia.
 Defined.
+
+Transparent N.sub.
 
 Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 	: Program ix bool :=
