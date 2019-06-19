@@ -1,12 +1,14 @@
 -I src
--R theories FreeSpec.Stdlib
+-R theories FreeSpec.Stdlib.FileSystem
 
 theories/Dec.v
-theories/FileSystem.v
-theories/FileSystemSpecs.v
-theories/Fun/StateFun.v
-theories/Fun/StepFun.v
-theories/Fun/PostFun.v
-theories/Fun/PreFun.v
+theories/Definitions.v
+theories/Specifications.v
+theories/Spec/Spec.v
+theories/Spec/State.v
+theories/Spec/Step.v
+theories/Spec/Post.v
+theories/Spec/Pre.v
+theories/Spec/Props.v
 src/fileSystem.ml
 src/stdlib_fileSystem_plugin.mlpack

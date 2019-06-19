@@ -1,4 +1,5 @@
 Require Import Ascii.
+Require Import String.
 Require Import BinInt.
 
 Class Decidable (P : Prop) := {
@@ -97,6 +98,18 @@ Defined.
 
 End BoolDec.
 
+Section NDec.
+
+Variables (a b : N).
+
+Global Instance DecidableNEq : (Decidable (a = b)) := {}.
+{
+	repeat decide equality.
+}
+Defined.
+
+End NDec.
+
 Section ZDec.
 
 Variables (a b : Z).
@@ -120,3 +133,15 @@ Global Instance DecidableNatEq : (Decidable (a = b)) := {}.
 Defined.
 
 End NatDec.
+
+Section StringDec.
+
+Variables (a b : string).
+
+Global Instance DecidableStringEq : (Decidable (a = b)) := {}.
+{
+	repeat decide equality.
+}
+Defined.
+
+End StringDec.

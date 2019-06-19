@@ -13,10 +13,8 @@ Require Import FreeSpec.Compose.
 Require Import FreeSpec.Component.
 Require Import FreeSpec.Specification.
 
-Require Import FreeSpec.Stdlib.FileSystem.
-Require Import FreeSpec.Stdlib.FileSystemSpecs.
-Require Import FreeSpec.Stdlib.Fun.StateFun.
-Require Import FreeSpec.Stdlib.Dec.
+Require Import FreeSpec.Stdlib.FileSystem.Definitions.
+Require Import FreeSpec.Stdlib.FileSystem.Specifications.
 
 Require Import String.
 
@@ -25,20 +23,25 @@ Local Open Scope free_scope.
 
 Definition openclose {ix} `{Use FileSystem.i ix} (str : string)
 : Program ix unit :=
-	fd <- FileSystem.open FileSystem.ReadOnly FileSystem.N str;
+	fd <- FileSystem.open FileSystem.ReadOnly FileSystem.DontCreate str;
 	FileSystem.close fd.
 
-Lemma correct (s : state) (str : string) :
+Definition s := initialState.
+
+Lemma correct (str : string) :
 		openclose str |> specs[s].
 Proof.
 constructor.
 + compute.
 	constructor.
+	simpl.
+	intro Hf.
+	now inversion Hf.
 +	intros.
 	constructor.
 	- simpl.
 		constructor.
-		unfold PostFun.closed_fd.
+		unfold opened_fd.
 		rewrite setFunOk.
 		easy.
 	- constructor.

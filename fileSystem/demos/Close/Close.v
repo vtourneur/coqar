@@ -13,9 +13,8 @@ Require Import FreeSpec.Compose.
 Require Import FreeSpec.Component.
 Require Import FreeSpec.Specification.
 
-Require Import FreeSpec.Stdlib.FileSystem.
-Require Import FreeSpec.Stdlib.FileSystemSpecs.
-Require Import FreeSpec.Stdlib.Fun.PostFun.
+Require Import FreeSpec.Stdlib.FileSystem.Definitions.
+Require Import FreeSpec.Stdlib.FileSystem.Specifications.
 
 Require Import String.
 
@@ -30,5 +29,7 @@ Lemma correct (s : state) (fd : Z) :
 Proof.
 constructor.
 + constructor.
+	unfold opened_fd.
+	destruct s.
 	intro.
 Abort.
