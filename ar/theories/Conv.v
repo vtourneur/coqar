@@ -31,7 +31,6 @@ Definition int_to_string (x: int) : string :=
 Definition Z_to_string (x: Z) : string :=
 	int_to_string (Z.to_int x).
 
-
 Fixpoint uint_of_string (s: string) : uint :=
 	match s with
 	| String "0" t => D0 (uint_of_string t)
@@ -93,39 +92,25 @@ Definition is_int (s : string) := int_to_string (int_of_string s) = s.
 Definition is_uint (s : string) := uint_to_string (uint_of_string s) = s.
 Definition is_Z (s : string) := Z_to_string (Z_of_string s) = s.
 
-Section is_uint_dec.
+Lemma DecidableIsUint (s : string) : Decidable (is_uint s).
+Proof.
+induction s.
++ now left.
++ destruct a.
+	destruct b; destruct b0; destruct b1; destruct b2; destruct b3;
+	destruct b4; destruct b5; destruct b6; try (now right);
+	destruct IHs;
+		try (now left; unfold is_uint; cbn; rewrite H);
+		try (now right; intro Hf; apply H; inversion Hf).
+Qed.
 
-Variable s : string.
-
-Global Instance DecidableIsUint : (Decidable (is_uint s)) := {}.
-{
-	induction s.
-	+ now left.
-	+ destruct a.
-		destruct b; destruct b0; destruct b1; destruct b2; destruct b3;
-		destruct b4; destruct b5; destruct b6; try (now right);
-		destruct IHs0;
-			try (now left; unfold is_uint; simpl; rewrite i);
-			try (now right; intro; apply n; inversion H).
-}
-Defined.
-
-End is_uint_dec.
-
-Section is_int_dec.
-
-Variable s : string.
-
-Global Instance DecidableIsInt : (Decidable (is_int s)) := {}.
-{
-	destruct s.
-	+ now left.
-	+ destruct a.
-		destruct b; destruct b0; destruct b1; destruct b2; destruct b3;
-		destruct b4; destruct b5; destruct b6; try (now right); case_dec (is_uint s0);
-			try (now left; unfold is_int; simpl; f_equal);
-			try (now right; intro; apply H; inversion H0).
-}
-Defined.
-
-End is_int_dec.
+Lemma DecidableIsInt (s : string) : (Decidable (is_int s)).
+Proof.
+destruct s.
++ now left.
++ destruct a.
+	destruct b; destruct b0; destruct b1; destruct b2; destruct b3;
+	destruct b4; destruct b5; destruct b6; try (now right); destruct (DecidableIsUint s);
+		try (now left; unfold is_int; cbn; f_equal);
+		try (now right; intro Hf; apply H; inversion Hf).
+Qed.

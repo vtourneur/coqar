@@ -5,3 +5,4 @@ theories/Padding.v
 theories/ArMain.v
 theories/Header.v
 theories/Dec.v
+theories/Proof.v

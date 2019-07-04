@@ -1,4 +1,4 @@
-Require Import FreeSpec.Stdlib.FileSystem.
+Require Import FreeSpec.Stdlib.FileSystem.Definitions.
 Require Import FreeSpec.Program.
 Require Import Prelude.Control.
 Require Import String.
@@ -6,30 +6,12 @@ Require Import Ascii.
 Require Import BinInt.
 Require Import BinNat.
 Require Import Header.
+Require Import Util.Util.
 
 From Equations Require Import Equations.
 
 Require Import Lia.
 Require Import Coq.Program.Wf.
-
-(* Needed to use wf recursion on type N *)
-Global Instance lt_wf : WellFounded N.lt.
-Proof.
-intro x.
-induction x using N.peano_ind.
-+ constructor.
-	intros y Hy.
-	lia.
-+ constructor.
-	intros y Hy. 
-	apply N.lt_succ_r in Hy.
-	apply N.le_lteq in Hy.
-	destruct Hy.
-	- constructor.
-		inversion IHx.
-		now apply H0.
-	- now subst.
-Qed.
 
 Local Open Scope prelude_scope.
 
@@ -112,8 +94,7 @@ Defined.
 We use Equations to define the term, which avoids this issue
 *)
 
-Opaque N.sub.
-
+Local Opaque N.sub.
 Equations extract_aux_rec {ix} `{Use FileSystem.i ix} (fd : Z) (size : N)
 	: Program ix unit by wf size :=
 
@@ -131,8 +112,9 @@ Next Obligation.
 lia.
 Defined.
 
-Transparent N.sub.
+Global Transparent extract_aux_rec.
 
+(* Version with header check :
 Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 	: Program ix bool :=
 	fd <- FileSystem.open FileSystem.ReadOnly FileSystem.DontCreate input;
@@ -147,6 +129,15 @@ Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
 		FileSystem.close fd;;
 		pure false
 	end.
+*)
+
+Definition extract_aux {ix} `{Use FileSystem.i ix} (input : string)
+	: Program ix bool :=
+	fd <- FileSystem.open FileSystem.ReadOnly FileSystem.DontCreate input;
+	size <- FileSystem.getSize fd;
+	extract_aux_rec fd (size - 8);;
+	FileSystem.close fd;;
+	pure true.
 
 Module Ar.
 	Definition create {ix} `{Use FileSystem.i ix} (files : list string) (output : string)

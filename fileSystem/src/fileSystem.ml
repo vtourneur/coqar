@@ -29,7 +29,76 @@ open Exec_plugin.Utils
 let string_of_coqstr coqstr =
   Bytes.to_string (bytes_of_coqstr coqstr)
 
-let path = ["FreeSpec"; "Stdlib"; "FileSystem"; "FileSystem"]
+let path = ["FreeSpec"; "Stdlib"; "FileSystem"; "Definitions"]
+
+(* Should go in util ------------------------------------------------------- *)
+
+type n_constructor = N0_N | Npos_N
+
+module Ind_N = struct
+  module N =
+    Inductive.Make(struct
+        type constructor = n_constructor
+        let type_name = "Z"
+        let modlist = ["Coq"; "Numbers"; "BinNums"]
+        let names = [("N0", N0_N); ("Npos", Npos_N)]
+      end)
+end
+
+let fold_bits input fzero fiter flast init =
+(* Fold over [input] bits, from the least to the most significant bit, using
+   [init] as its initial value:
+     - [fzero] is called if [input] is 0
+     - [fiter] is called for the least significant bits
+     - [flast] is called for the most significant bit *)
+  if input == 0
+  then fzero init
+  else let rec fold_bit_aux input acc =
+         let next = input lsr 1 in
+         let bit = input land 1 == 1 in
+         if next == 0
+         then flast acc
+         else fold_bit_aux next (fiter acc bit)
+       in fold_bit_aux input init
+
+let int_of_coqpositive =
+  (* This function does not implement any special protection against integer
+     overflow. Because Coq [positive] terms are not bounded, there is no
+     guarantee that [int_of_coqpositive] will be equivalent to its argument. *)
+  let rec of_coqpositive_aux acc depth p =
+    let (p, args) = app_full p in
+    match (Ind.Positive.constructor_of p, args) with
+    | (Some XH_positive, []) -> acc + depth
+    | (Some XO_positive, [next]) -> of_coqpositive_aux acc (2 * depth) next
+    | (Some XI_positive, [next]) -> of_coqpositive_aux (acc + depth) (2 * depth) next
+    | _ -> raise (UnsupportedTerm "not a constructor of [positive]")
+  in of_coqpositive_aux 0 1
+
+let int_to_coqpositive i =
+  let cXI = Ind.Positive.mkConstructor "xI" in
+  let cXO = Ind.Positive.mkConstructor "xO" in
+  let cXH = Ind.Positive.mkConstructor "xH" in
+  let not_zero _ =
+    raise (UnsupportedTerm "integer is not strictly positive") in
+  let fiter cont bit =
+    let c = if bit then cXI else cXO in
+    fun next -> cont (Constr.mkApp (c, (Array.of_list [next]))) in
+  let flast cont = cont cXH in
+  fold_bits i not_zero fiter flast (fun x -> x)
+
+let int_of_coqn n =
+  let (n, args) = app_full n in
+  match (Ind_N.N.constructor_of n, args) with
+  | (Some N0_N, []) -> 0
+  | (Some Npos_N, [p]) -> int_of_coqpositive p
+  | _ -> raise (UnsupportedTerm "not a constructor of [N]")
+
+let int_to_coqn = function
+  | x when x > 0 -> Constr.mkApp (Ind_N.N.mkConstructor "Npos", Array.of_list [int_to_coqpositive x])
+  | 0 -> Ind_N.N.mkConstructor "N0"
+       | x -> raise (UnsupportedTerm "not a natural number")
+
+(* ------------------------------------------------------------------------- *)
 
 type mode_constructor = ReadOnly | WriteOnly | ReadWrite
 type seekRef_constructor = Beginning | Current | End

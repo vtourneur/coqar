@@ -43,4 +43,6 @@ Inductive post : forall {A}, FileSystem.i A -> A -> state -> Prop :=
 |	seek_post (s : state) : forall (ref : FileSystem.seekRef) (n : Z) (fd : Z),
 		post (FileSystem.Seek ref n fd) tt s
 |	close_post (s : state) : forall (fd : Z),
-		post (FileSystem.Close fd) tt s.
+		post (FileSystem.Close fd) tt s
+| unlink_post (s : state) : forall (str : string),
+		post (FileSystem.Unlink str) tt s.

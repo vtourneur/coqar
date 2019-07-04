@@ -126,25 +126,3 @@ abs_step (FileSystem.Unlink str) x s :=
 	MkState sfd sfile ;
 
 abs_step _ _ _ := s.
-
-Global Transparent abs_step.
-
-(* TODO Update
-abs_step (FileSystem.Seek ref n fd) x s :=
-	(* The position is updated *)
-	match ref with
-	| FileSystem.Beginning =>
-		let s := changeFun s (option_map (setPos (const (Some (Z.to_N n))))) fd in
-		s
-	| FileSystem.Current =>
-	(* If we know the previous position, we can compute the new position *)
-		let s := changeFun s (option_map (setPos (option_map (fun x => Z.to_N (Z.add n (Z.of_N x)))))) fd in
-		s
-	| FileSystem.End =>
-	(* If we know the size of the file, we can compute the new position *)
-		let size := rm_opt (option_map size (s fd)) in
-		let pos := option_map (fun x => Z.to_N (Z.add n (Z.of_N x))) size in
-		let s := changeFun s (option_map (setPos (const pos))) fd in
-		s
-	end ;
-*)
